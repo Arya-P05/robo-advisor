@@ -42,17 +42,36 @@ if st.button("Optimize Portfolio"):
         returns = fetch_stock_data(tickers)
         weights = optimize_portfolio(returns)
     
-    st.success("Optimization complete!")
+    print("Optimization worked!")
+
+    print(f"Tickers: {tickers}")
+    print(f"Weights: {weights}")
     
+    # Filter out tickers with 0% weight for the chart
+    filtered_data = [(ticker, weight) for ticker, weight in zip(tickers, weights) if ((weight * 100).round(2)) > 0]
+    if not filtered_data:
+        st.error("No stocks with non-zero allocation to display on the chart.")
+        st.stop()
+    filtered_tickers, filtered_weights = zip(*filtered_data)
+
+    print(f"Filtered Tickers: {filtered_tickers}")
+
     # Prepare the allocation DataFrame.
     allocation = pd.DataFrame({
         "Stock": tickers,
         "Weight (%)": (weights * 100).round(2),
         "Amount (CAD)": (weights * investment_amount).round(2)
     })
+    allocation = allocation.sort_values("Weight (%)", ascending=False)
     
     st.markdown("## Recommended Allocation")
-    st.dataframe(allocation.style.format({"Amount (CAD)": "{:,.2f}"}), use_container_width=True)
+    st.dataframe(
+        allocation.style.format({
+            "Amount (CAD)": "{:,.2f}",
+            "Weight (%)": "{:.2f}"
+        }),
+        use_container_width=True
+    )
     
     # Create the figure and axis.
     fig, ax = plt.subplots(figsize=(8, 8))
@@ -79,22 +98,19 @@ if st.button("Optimize Portfolio"):
     
     # Plot the donut (pie) chart without autopct so that custom labels can be added.
     wedges, _ = ax.pie(
-        weights,
+        filtered_weights,
         startangle=90,
-        colors=colors,
+        colors=colors[:len(filtered_tickers)],
         wedgeprops={'linewidth': 1.5, 'edgecolor': 'white'}
     )
     
     # Add custom ticker labels outside the donut chart.
     for i, wedge in enumerate(wedges):
-        # Compute the angle of the wedge center.
         angle = (wedge.theta2 + wedge.theta1) / 2.0
-        # Position the label slightly outside the donut.
         x = 1.15 * np.cos(np.deg2rad(angle))
         y = 1.15 * np.sin(np.deg2rad(angle))
-        label = f"{tickers[i]}\n{weights[i]*100:.1f}%"
-        ax.text(x, y, label, ha="center", va="center",
-                fontsize=12, color="black")
+        label = f"{filtered_tickers[i]}\n{filtered_weights[i]*100:.1f}%"
+        ax.text(x, y, label, ha="center", va="center", fontsize=12, color="black")
     
     # Add a white circle at the center to create the donut effect.
     centre_circle = plt.Circle((0, 0), 0.70, fc='white', linewidth=0)
