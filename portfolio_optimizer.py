@@ -3,7 +3,7 @@ import numpy as np
 from scipy.optimize import minimize
 
 def fetch_stock_data(tickers, start_date="2015-01-01", end_date="2023-01-01"):
-    data = yf.download(tickers, start=start_date, end=end_date)['Adj Close']
+    data = yf.download(tickers, start=start_date, end=end_date, auto_adjust=False)['Adj Close']
     returns = data.pct_change().dropna()
     return returns
 
