@@ -1,0 +1,4 @@
+robo-advisor/
+├── app.py                  # Streamlit app
+├── portfolio_optimizer.py  # Core logic (will get xtracted from notebook)
+└── requirements.txt        # Dependencies
